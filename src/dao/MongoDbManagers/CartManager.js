@@ -19,7 +19,7 @@ export default class CartManager {
   async getCart(id) {
     try {
       let result = await cartModel.find({ _id: id }, { __v: 0 }).lean();
-      if (!result) throw new Error(`The cart not exist.`);
+      if (result.length === 0) throw new Error(`The cart not exist.`);
       return result;
     } catch (error) {
       return { error: error.message };
@@ -28,9 +28,11 @@ export default class CartManager {
 
   async addProductToCart(cid, pid) {
     try {
-      if (!(await this.#checkIfProductExist(pid)))
+      let product = await this.#checkIfProductExist(pid);
+      if (product?.error)
         throw new Error(`The product does not exist.`);
-      if (!(await this.getCart(cid)))
+      let cartExist = await this.getCart(cid)
+      if (cartExist?.error)
         throw new Error(`The cart does not exist.`);
       let cart = await cartModel.find({ "products.pid": pid });
       let result;
